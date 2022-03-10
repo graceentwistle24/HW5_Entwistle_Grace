@@ -1,20 +1,3 @@
----
-title: "Shiny App Assignment"
-author: "Grace Entwistle"
-date: "3/5/2022"
-output: html_document
-knit: (function(input_file, encoding) {
-  out_dir <- 'docs';
-  rmarkdown::render(input_file,
- encoding=encoding,
- output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r data/packages,message=FALSE}
 library(shiny)
 library(shinydashboard)
 library(tidyverse)
@@ -26,6 +9,14 @@ library(ggthemes)
 library(DT)
 library(knitr)
 library(kableExtra)
+
+#I utilized data from NASA's GeoCoded Disaster dataset from 1960 - 2018, which can be found at this URL: https://sedac.ciesin.columbia.edu/data/set/pend-gdis-1960-2018#:~:text=The%20Geocoded%20Disasters%20(GDIS)%20Dataset,the%20years%201960%20to%202018.
+#I have volunteered for disaster relief in the past, and am very interested in the rise of natural disasters that have occurred recently. My dataset includes natural disasters that occurred across 200 countries from 1960 to 2018. In my plot below, I specifically look at flood and storm counts across all countries to see how the counts of each floods compare to reported storms. I had assumed that there would be more storms than floods, because storms lead to floods, but not all storms cause floods. However, as you can see in the chart below, there are more floods than storms in many years.
+#I am creating this dashboard to provide awareness of the increase in natural disasters that have occurred over the years. I created multiple pages for the user to review data in a variety of ways, maps, tables, and charts. Each of the tables provide searchable functions, and the maps are all interactive.
+#I created a map of the World to show which countries had the most disasters overall from 1960-2018. The totals are calculated by adding up each of the disasters, regardless of type, for each country. I am utilizing a plotly map for the interactivity of showing the country and total number of disasters when you hover over an area.
+#I created two tables so one can see the total number of natural disasters, by type, for each country and statestate has had from 1960 - 2018. I used DT package for both tables because I like the search bar, as well as the tab format to view the different country/states and find which one you are looking for.
+#Additionally, I mapped the United States specifically to show with markers where each of the disasters have occurred. The markers are each shown by a different color which designates the type of disaster that occurred at that location. Additionally, if you hover over each marker, you see the year that disaster occurred and the type of disaster.
+#I also created graphs of the trends of each disaster type across the 58 year timeframe. Each map includes a single disaster type (i.e., floods, droughts, earthquakes, etc.). I utilized ggplot2 package to create each of these line graphs.
 
 ##read in data
 disasters <- read.csv("World Disaster Data 1960-2018.csv")
@@ -42,17 +33,6 @@ total.disasters <- disasters %>%
   summarise(
     "TotalNum" = n()
   )
-
-```
-I utilized data from NASA’s GeoCoded Disaster dataset from 1960 - 2018, which can be found at this URL: https://sedac.ciesin.columbia.edu/data/set/pend-gdis-1960-2018#:~:text=The%20Geocoded%20Disasters%20(GDIS)%20Dataset,the%20years%201960%20to%202018.
-
-I have volunteered for disaster relief in the past, and am very interested in the rise of natural disasters that have occurred recently. My dataset includes natural disasters that occurred across 200 countries from 1960 to 2018. In my plot below, I specifically look at flood and storm counts across all countries to see how the counts of each floods compare to reported storms. I had assumed that there would be more storms than floods, because storms lead to floods, but not all storms cause floods. However, as you can see in the chart below, there are more floods than storms in many years.
-
-I am creating this dashboard to provide awareness of the increase in natural disasters that have occurred over the years. I created multiple pages for the user to review data in a variety of ways, maps, tables, and charts. Each of the tables provide searchable functions, and the maps are all interactive.
-
-
-I created a map of the World to show which countries had the most disasters overall from 1960-2018. The totals are calculated by adding up each of the disasters, regardless of type, for each country. I am utilizing a plotly map for the interactivity of showing the country and total number of disasters when you hover over an area.
-```{r worldmap}
 worldmap  <- map_data("world")
 
 mapdata <- inner_join(total.disasters, worldmap, by = c("country" = "region"))
@@ -63,17 +43,14 @@ world_map <- ggplot() +
                color="black", fill=NA) + theme_minimal() 
 
 world_map <- world_map + 
-    geom_polygon(data = mapdata, 
+  geom_polygon(data = mapdata, 
                mapping = aes(x = long, y = lat, group = group, fill = TotalNum, 
                              text = paste("Country :", country,
-                           "<br> Total Disasters :", TotalNum))) + 
+                                          "<br> Total Disasters :", TotalNum))) + 
   scale_fill_viridis_c(option="magma", direction = -1)
 
 world.map <- ggplotly(world_map, tooltip = "text")
-world.map
-```
-In this table, you can see the total number of natural disasters, by type, each country has had from 1960 - 2018. Specifically I used DT package for the Country table because I like the search bar, as well as the tab format to view the different countries and find which one you are looking for. 
-```{r worldtable}
+
 by.country <- disasters %>% 
   group_by(country, disastertype) %>% 
   summarise(TotalNum = n())
@@ -83,10 +60,9 @@ by.country[is.na(by.country)] <- 0
 
 world.table <- by.country %>%
   datatable(colnames = c("Country", "Droughts", "Earthquakes", "Extreme Temperatures", "Floods", "Landslides", "Storms", "Volcanic Activity"))
-world.table
-```
-Additionally, I mapped the United States specifically to show with markers where each of the disasters have occurred. The markers are each shown by a different color which designates the type of disaster that occurred at that location. Additionally, if you hover over each marker, you see the year that disaster occurred and the type of disaster.
-```{r usMap}
+
+
+
 US.disasters <- disasters %>% 
   subset(country == "USA")
 
@@ -126,14 +102,11 @@ icons <- awesomeIcons(
 US.map <- leaflet(US.disasters) %>%
   addTiles() %>% 
   addAwesomeMarkers(~longitude, ~latitude,
-             label = paste("Type :", US.disasters$disastertype,
-                           " Year :", US.disasters$year),
-             icon=icons)
+                    label = paste("Type :", US.disasters$disastertype,
+                                  " Year :", US.disasters$year),
+                    icon=icons)
 US.map
-```
 
-In this table you can see the total  number of natural disasters, by type, each state has had from 1960 - 2018. I used DT package for the State table because I like the search bar, as well as the tab format to view the different state and find which one you are looking for.
-```{r UStable}
 by.state <- US.disasters %>% 
   group_by(adm1, disastertype) %>% 
   summarise(TotalNum = n())
@@ -143,9 +116,7 @@ by.state[is.na(by.state)] <- 0
 state.tbl <- by.state %>%
   datatable(colnames = c("State", "Droughts", "Earthquakes", "Extreme Temperatures", "Floods", "Landslides", "Storms", "Volcanic Activity"))
 state.tbl
-```
-I also created graphs of the trends of each disaster type across the 58 year timeframe. Each map includes a single disaster type (i.e., floods, droughts, earthquakes, etc.). I utilized ggplot2 package to create each of these line graphs.
-```{r Trend}
+
 by.disaster <- disasters %>% 
   group_by(disastertype, year) %>% 
   summarise("TotalNum" = n())
@@ -162,7 +133,6 @@ flood.chart <- flood.chart +
   ggtitle("Floods Across the World from 1960 to 2018") +
   xlab("Year") + ylab("Total Number") +
   scale_x_continuous(breaks = seq(1960, 2018, 5))
-flood.chart
 
 drought <- by.disaster %>% 
   subset(disastertype == "drought")
@@ -174,7 +144,6 @@ drought.chart <- drought.chart +
   ggtitle("Droughts Across the World from 1960 to 2018") +
   xlab("Year") + ylab("Total Number")+
   scale_x_continuous(breaks = seq(1960, 2018, 5))
-drought.chart
 
 earthquake <- by.disaster %>% 
   subset(disastertype == "earthquake")
@@ -186,7 +155,6 @@ earthquake.chart <- earthquake.chart +
   ggtitle("Earthquakes Across the World from 1960 to 2018") +
   xlab("Year") + ylab("Total Number") +
   scale_x_continuous(breaks = seq(1960, 2018, 5))
-earthquake.chart
 
 extremetemp <- by.disaster %>% 
   subset(disastertype == "extreme temperature ")
@@ -198,7 +166,6 @@ extremetemp.chart <- extremetemp.chart +
   ggtitle("Extreme Temperatures Across the World from 1960 to 2018") +
   xlab("Year") + ylab("Total Number") +
   scale_x_continuous(breaks = seq(1960, 2018, 5))
-extremetemp.chart
 
 landslide <- by.disaster %>% 
   subset(disastertype == "landslide")
@@ -210,7 +177,6 @@ landslide.chart <- landslide.chart +
   ggtitle("Landslides Across the World from 1960 to 2018") +
   xlab("Year") + ylab("Total Number") +
   scale_x_continuous(breaks = seq(1960, 2018, 5))
-landslide.chart
 
 volcanicact <- by.disaster %>% 
   subset(disastertype == "volcanic activity")
@@ -222,12 +188,7 @@ volcanicact.chart <- volcanicact.chart +
   ggtitle("Volcanic Activity Across the World from 1960 to 2018") +
   xlab("Year") + ylab("Total Number") +
   scale_x_continuous(breaks = seq(1960, 2018, 5))
-volcanicact.chart
 
-```
-
-
-```{r shinyApp}
 ui <- dashboardPage(
   
   # format
@@ -263,7 +224,7 @@ ui <- dashboardPage(
               h2("Total Number of Natural Disasters Per Country"),
               box(dataTableOutput("world.table"), width= 500)
       ),
-       # third page
+      # third page
       tabItem("USMap",
               h2("Natural Disasters in United States", inline=TRUE),
               box(leafletOutput("US.map"), width= 500)
@@ -273,7 +234,7 @@ ui <- dashboardPage(
               h2("Total Number of Natural Disasters Per US State", inline=TRUE),
               box(dataTableOutput("state.tbl"), width= 500)
       ),
-     # fifth page
+      # fifth page
       tabItem("trends",
               h2("Trends of Natural Disasters Each Year"),
               h3("Trend of Floods from 1960 - 2018"),
@@ -343,7 +304,7 @@ server <- function(input, output) {
     drought.chart 
   )
   
-    # --------------------------------------------------
+  # --------------------------------------------------
   # Earthquake Trends
   # --------------------------------------------------
   output$earthquake.chart <- renderPlot(
@@ -351,7 +312,7 @@ server <- function(input, output) {
     earthquake.chart 
   )
   
-    # --------------------------------------------------
+  # --------------------------------------------------
   # Extreme Temperature Trends
   # --------------------------------------------------
   output$extremetemp.chart <- renderPlot(
@@ -359,7 +320,7 @@ server <- function(input, output) {
     extremetemp.chart 
   )
   
-    # --------------------------------------------------
+  # --------------------------------------------------
   # Landslide Trends
   # --------------------------------------------------
   output$landslide.chart <- renderPlot(
@@ -367,22 +328,15 @@ server <- function(input, output) {
     landslide.chart 
   )
   
-    # --------------------------------------------------
+  # --------------------------------------------------
   # Volcanic Activity Trends
   # --------------------------------------------------
   output$volcanicact.chart <- renderPlot(
     
     volcanicact.chart 
   )
-
+  
   
 }
 
 shinyApp(ui, server)
-```
-
-
-
-
-
-
